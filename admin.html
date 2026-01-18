@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Ultimatum Game</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container fade-in">
+        <div class="admin-header">
+            <h1>Ultimatum Game Admin</h1>
+        </div>
+
+        <div class="card">
+            <h2>Create New Game</h2>
+            <form id="createGameForm">
+                <div class="form-group">
+                    <label for="totalSum">Total Sum to Split</label>
+                    <input type="number" id="totalSum" value="100" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="rounds">Number of Rounds</label>
+                    <input type="number" id="rounds" value="1" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="roleMode">Role Assignment Mode</label>
+                    <select id="roleMode">
+                        <option value="fixed">Fixed Roles (Player 1 always Proposer)</option>
+                        <option value="alternating">Alternating Roles (Swap every round)</option>
+                        <option value="random_each_round">Random each round</option>
+                    </select>
+                </div>
+
+                <div class="form-group checkbox-wrapper">
+                    <input type="checkbox" id="chatEnabled">
+                    <label for="chatEnabled">Enable Chat between players</label>
+                </div>
+
+                <div class="form-group checkbox-wrapper">
+                    <input type="checkbox" id="showScore" checked>
+                    <label for="showScore">Show real-time score to players</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg">Create Game</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="admin-header" style="margin-bottom: 1rem;">
+                <h2>Recent Games</h2>
+                <button id="downloadCsvBtn" class="btn btn-secondary">Download CSV</button>
+            </div>
+            <div id="gamesList" class="games-list">
+                <!-- Game items will be populated here -->
+                <div class="game-item" style="justify-content: center; color: var(--text-muted);">
+                    Loading games...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Compat SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- Config & Logic (Inlined) -->
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCw55eqDs0QJK2bkfoA044vJRqE5uYLXFg",
+            authDomain: "ultimatum-game-53dac.firebaseapp.com",
+            projectId: "ultimatum-game-53dac",
+            storageBucket: "ultimatum-game-53dac.firebasestorage.app",
+            messagingSenderId: "526372511794",
+            appId: "1:526372511794:web:7ddbda6f991ab2ec445c2b",
+            measurementId: "G-DYVYK5L0QP"
+        };
+
+        // Initialize Firebase Global
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // --- Admin Logic ---
+        // No imports needed, we use global 'db'
+
+        const createGameForm = document.getElementById('createGameForm');
+        const gamesList = document.getElementById('gamesList');
+        const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+
+        // Helper to generate a random 6-digit code
+        function generateGameCode() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        // Create Game Handler
+        createGameForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = createGameForm.querySelector('button');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating...';
+
+            // Clear previous messages
+            const existingSuccess = document.getElementById('successBox');
+            if (existingSuccess) existingSuccess.remove();
+            const existingError = document.getElementById('errorBox');
+            if (existingError) existingError.remove();
+
+            const config = {
+                totalSum: Number(document.getElementById('totalSum').value),
+                rounds: Number(document.getElementById('rounds').value),
+                roleMode: document.getElementById('roleMode').value,
+                chatEnabled: document.getElementById('chatEnabled').checked,
+                showScore: document.getElementById('showScore').checked
+            };
+
+            try {
+                const gameCode = generateGameCode();
+                console.log("Attempting to create game:", gameCode);
+
+                // Create game document with Timeout
+                const createPromise = db.collection("games").add({
+                    gameCode: gameCode,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    config: config,
+                    status: "waiting",
+                    players: [],
+                    currentRound: 1,
+                    history: [],
+                    roundState: {
+                        offer: null,
+                        decision: null,
+                        chatMessages: []
+                    }
+                });
+
+                // Timeout Promise
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Connection timed out. Check your internet or Firewall.")), 10000)
+                );
+
+                await Promise.race([createPromise, timeoutPromise]);
+
+                console.log("Game document written successfully.");
+
+                // Generate Link Robustly
+                let baseUrl = window.location.href;
+                // Simple replacements to ensure we point to index.html
+                if (baseUrl.includes('admin.html')) {
+                    baseUrl = baseUrl.replace('admin.html', 'index.html');
+                } else if (baseUrl.endsWith('/')) {
+                    baseUrl += 'index.html';
+                } else {
+                    baseUrl += '/index.html';
+                }
+
+                // Clean URL params and hash
+                const joinLink = `${baseUrl.split('?')[0].split('#')[0]}?code=${gameCode}`;
+
+                // Success Message UI
+                const gameItem = document.createElement('div');
+                gameItem.id = 'successBox';
+                gameItem.className = 'card';
+                gameItem.style.background = 'var(--surface-dark)';
+                gameItem.style.border = '2px solid var(--success)';
+                gameItem.style.marginTop = '2rem';
+                gameItem.innerHTML = `
+                    <h3 style="color: var(--success)">Game Created!</h3>
+                    <p><strong>Code:</strong> <span style="font-size: 1.5rem;">${gameCode}</span></p>
+                    <p style="margin: 0.5rem 0;">
+                        <strong>Share Link:</strong><br>
+                        <a href="${joinLink}" target="_blank" style="color: var(--primary-color); word-break: break-all;">${joinLink}</a>
+                    </p>
+                `;
+
+                createGameForm.parentNode.insertBefore(gameItem, createGameForm.nextSibling);
+                createGameForm.reset();
+
+            } catch (error) {
+                console.error("Error creating game: ", error);
+
+                // Error Message UI
+                const errDiv = document.createElement('div');
+                errDiv.id = 'errorBox';
+                errDiv.className = 'card';
+                errDiv.style.background = '#3e1b1b';
+                errDiv.style.border = '2px solid var(--danger)';
+                errDiv.style.marginTop = '2rem';
+                errDiv.innerHTML = `
+                    <h3 style="color: var(--danger)">Creation Failed</h3>
+                    <p>${error.message}</p>
+                    <p class="text-muted" style="font-size: 0.9rem;">
+                        Possible causes:<br>
+                        1. Firestore Rules block writes (Did you enable <strong>Test Mode</strong>?).<br>
+                        2. Internet connection issue.<br>
+                        3. Quota exceeded.
+                    </p>
+                `;
+                createGameForm.parentNode.insertBefore(errDiv, createGameForm.nextSibling);
+
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Game';
+            }
+        });
+
+        // Listen for Games
+        db.collection("games").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+            gamesList.innerHTML = '';
+
+            if (snapshot.empty) {
+                gamesList.innerHTML = '<div class="game-item" style="justify-content: center;">No games found.</div>';
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                const game = doc.data();
+                const date = game.createdAt ? game.createdAt.toDate().toLocaleString() : 'Just now';
+
+                const div = document.createElement('div');
+                div.className = 'game-item';
+                div.innerHTML = `
+                    <div>
+                        <strong>Code: ${game.gameCode}</strong><br>
+                        <small class="text-muted">${date}</small>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="status-badge status-${game.status}">${game.status}</span><br>
+                        <small>${game.players ? game.players.length : 0}/2 Players</small>
+                    </div>
+                `;
+                gamesList.appendChild(div);
+            });
+        }, (error) => {
+            // Handle snapshot error
+            console.error("Snapshot error:", error);
+            gamesList.innerHTML = `<div class="game-item" style="color: var(--danger); justify-content: center;">
+                Error loading games: ${error.message}<br>
+                Check Firestore Rules.
+           </div>`;
+        });
+
+        // CSV Export Logic
+        downloadCsvBtn.addEventListener('click', async () => {
+            downloadCsvBtn.disabled = true;
+            downloadCsvBtn.textContent = "Generating...";
+
+            try {
+                const querySnapshot = await db.collection("games").get();
+
+                let csvContent = "data:text/csv;charset=utf-8,";
+                // Header
+                csvContent += "GameID,Date,TotalSum,Rounds,RoleMode,RoundNum,ProposerID,ResponderID,Offer,Decision,ChatLogs\n";
+
+                querySnapshot.forEach((doc) => {
+                    const game = doc.data();
+                    const date = game.createdAt ? game.createdAt.toDate().toISOString() : '';
+
+                    // If game has history, log each round
+                    if (game.history && game.history.length > 0) {
+                        game.history.forEach(round => {
+                            const chatLogs = round.chatLogs ? round.chatLogs.map(c => `[${c.role}]: ${c.msg}`).join(" | ").replace(/,/g, ";") : "";
+
+                            const row = [
+                                game.gameCode,
+                                date,
+                                game.config.totalSum,
+                                game.config.rounds,
+                                game.config.roleMode,
+                                round.round,
+                                round.proposer, // This might be session ID
+                                round.responder,
+                                round.offer,
+                                round.decision,
+                                chatLogs
+                            ].join(",");
+                            csvContent += row + "\n";
+                        });
+                    }
+                });
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "ultimatum_game_data.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+            } catch (e) {
+                console.error("Export error:", e);
+                alert("Failed to export CSV: " + e.message);
+            } finally {
+                downloadCsvBtn.disabled = false;
+                downloadCsvBtn.textContent = "Download CSV";
+            }
+        });
+    </script>
+</body>
+
+</html>

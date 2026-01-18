@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimatum Game</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Game specific styles */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .role-proposer {
+            background-color: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            border: 1px solid #818cf8;
+        }
+
+        .role-responder {
+            background-color: rgba(236, 72, 153, 0.2);
+            color: #f472b6;
+            border: 1px solid #f472b6;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .score-box {
+            text-align: center;
+        }
+
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .range-container {
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        input[type=range] {
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        .offer-display {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            margin: 2rem 0;
+            color: var(--primary-color);
+        }
+
+        .chat-container {
+            margin-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }
+
+        .chat-messages {
+            height: 150px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .chat-msg {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            max-width: 80%;
+        }
+
+        .chat-msg.me {
+            background-color: var(--primary-color);
+            align-self: flex-end;
+            color: white;
+        }
+
+        .chat-msg.them {
+            background-color: var(--surface-dark);
+            align-self: flex-start;
+            border: 1px solid var(--border-color);
+        }
+
+        .results-summary {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- HEADER -->
+        <div id="gameHeader" class="hidden"
+            style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin:0;">Ultimatum Game</h2>
+            <div id="roundIndicator">Round <span id="currentRoundDisplay">1</span></div>
+        </div>
+
+        <!-- VIEW: LOBBY -->
+        <div id="viewLobby" class="view-section active">
+            <div class="card" style="max-width: 500px; margin: 2rem auto; text-align: center;">
+                <h1>Join Game</h1>
+                <p class="text-muted" style="margin-bottom: 2rem;">Enter the code provided by the game admin.</p>
+                <form id="joinForm">
+                    <div class="form-group">
+                        <input type="text" id="gameCodeInput" placeholder="Enter 6-digit Code" maxlength="6"
+                            style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">Join Game</button>
+                    <p id="joinError" style="color: var(--danger); margin-top: 1rem; display: none;"></p>
+                </form>
+
+                <div id="availableGamesSection"
+                    style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                    <h3>Available Games</h3>
+                    <div id="availableGamesList"
+                        style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
+                        <small class="text-muted">Loading games...</small>
+                    </div>
+                    <button id="refreshGamesBtn" class="btn btn-secondary btn-sm" style="margin-top: 1rem;">Refresh
+                        List</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: WAITING ROOM -->
+        <div id="viewWaiting" class="view-section">
+            <div class="card" style="text-align: center; padding: 3rem;">
+                <div class="spinner" style="margin-bottom: 1rem;">⏳</div> <!-- Can replace with proper CSS spinner -->
+                <h2 id="waitingMessage">Waiting for game to start...</h2>
+                <p id="waitingSubtext" class="text-muted">Please wait.</p>
+            </div>
+        </div>
+
+        <!-- VIEW: GAME ACTION -->
+        <div id="viewGame" class="view-section">
+            <div class="card">
+                <!-- Scoreboard -->
+                <div id="scoreboard" class="scoreboard hidden">
+                    <div class="score-box">
+                        <div class="text-muted">You</div>
+                        <div id="myScore" class="score-value">0</div>
+                    </div>
+                    <div class="score-box">
+                        <div class="text-muted">Opponent</div>
+                        <div id="oppScore" class="score-value">0</div>
+                    </div>
+                </div>
+
+                <!-- Role Indicator -->
+                <div style="text-align: center;">
+                    <div id="roleBadge" class="role-badge role-proposer">Proposer</div>
+                    <p id="roleDescription" style="margin-bottom: 2rem;">You decide how to split the money.</p>
+                </div>
+
+                <!-- Proposer Controls -->
+                <div id="proposerControls" class="hidden">
+                    <div class="range-container">
+                        <p>Total Sum: <strong id="totalSumDisplay">100</strong></p>
+                        <input type="range" id="offerSlider" min="0" max="100" value="50">
+                        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+                            <div class="card" style="padding: 1rem; width: 45%;">
+                                <small>You keep</small>
+                                <div id="keepValue" class="score-value">50</div>
+                            </div>
+                            <div class="card" style="padding: 1rem; width: 45%;">
+                                <small>Opponent gets</small>
+                                <div id="offerValue" class="score-value">50</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="makeOfferBtn" class="btn btn-primary btn-lg">Make Offer</button>
+                </div>
+
+                <!-- Responder Controls -->
+                <div id="responderControls" class="hidden">
+                    <div class="offer-display">
+                        Offer: <span id="responderOfferValue">50</span>
+                    </div>
+                    <p style="text-align: center; margin-bottom: 2rem;">
+                        The proposer wants to keep <strong id="responderKeepValue">50</strong>.
+                    </p>
+                    <div style="display: flex; gap: 1rem;">
+                        <button id="acceptBtn" class="btn btn-primary btn-lg"
+                            style="background-color: var(--success);">Accept</button>
+                        <button id="refuseBtn" class="btn btn-danger btn-lg">Refuse</button>
+                    </div>
+                </div>
+
+                <!-- Chat -->
+                <div id="chatSection" class="chat-container hidden">
+                    <div id="chatMessages" class="chat-messages"></div>
+                    <form id="chatForm" style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="chatInput" placeholder="Type a message..." autocomplete="off">
+                        <button type="submit" class="btn btn-secondary">Send</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: ROUND RESULT -->
+        <div id="viewResult" class="view-section">
+            <div class="card" style="text-align: center;">
+                <h2>Round Results</h2>
+                <div id="roundResultSummary" class="results-summary">
+                    <!-- Dynamic content -->
+                </div>
+                <p id="nextRoundTimer" class="text-muted">Next round starting soon...</p>
+            </div>
+        </div>
+
+        <!-- VIEW: GAME OVER -->
+        <div id="viewGameOver" class="view-section">
+            <div class="card" style="text-align: center;">
+                <h1>Game Over</h1>
+                <div class="scoreboard" style="display:flex; justify-content:center;">
+                    <div class="score-box">
+                        <div class="text-muted">Final Score (You)</div>
+                        <div id="finalMyScore" class="score-value">0</div>
+                    </div>
+                    <div class="score-box">
+                        <div class="text-muted">Final Score (Opponent)</div>
+                        <div id="finalOppScore" class="score-value">0</div>
+                    </div>
+                </div>
+                <button onclick="location.reload()" class="btn btn-primary">Back to Home</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase Compat SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- Config & Logic (Inlined) -->
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCw55eqDs0QJK2bkfoA044vJRqE5uYLXFg",
+            authDomain: "ultimatum-game-53dac.firebaseapp.com",
+            projectId: "ultimatum-game-53dac",
+            storageBucket: "ultimatum-game-53dac.firebasestorage.app",
+            messagingSenderId: "526372511794",
+            appId: "1:526372511794:web:7ddbda6f991ab2ec445c2b",
+            measurementId: "G-DYVYK5L0QP"
+        };
+
+        // Initialize Firebase Global
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // --- Game Logic ---
+
+        // DOM Elements
+        const views = {
+            lobby: document.getElementById('viewLobby'),
+            waiting: document.getElementById('viewWaiting'),
+            game: document.getElementById('viewGame'),
+            result: document.getElementById('viewResult'),
+            gameOver: document.getElementById('viewGameOver')
+        };
+
+        const joinForm = document.getElementById('joinForm');
+        const gameCodeInput = document.getElementById('gameCodeInput');
+        const joinError = document.getElementById('joinError');
+
+        const gameHeader = document.getElementById('gameHeader');
+        const currentRoundDisplay = document.getElementById('currentRoundDisplay');
+        const scoreboard = document.getElementById('scoreboard');
+        const myScoreEl = document.getElementById('myScore');
+        const oppScoreEl = document.getElementById('oppScore');
+
+        const roleBadge = document.getElementById('roleBadge');
+        const roleDescription = document.getElementById('roleDescription');
+
+        const proposerControls = document.getElementById('proposerControls');
+        const offerSlider = document.getElementById('offerSlider');
+        const keepValue = document.getElementById('keepValue');
+        const offerValue = document.getElementById('offerValue');
+        const makeOfferBtn = document.getElementById('makeOfferBtn');
+        const totalSumDisplay = document.getElementById('totalSumDisplay');
+
+        const responderControls = document.getElementById('responderControls');
+        const responderOfferValue = document.getElementById('responderOfferValue');
+        const responderKeepValue = document.getElementById('responderKeepValue');
+        const acceptBtn = document.getElementById('acceptBtn');
+        const refuseBtn = document.getElementById('refuseBtn');
+
+        const chatSection = document.getElementById('chatSection');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatForm = document.getElementById('chatForm');
+        const chatInput = document.getElementById('chatInput');
+
+        // State
+        let currentGameId = null;
+        let myPlayerId = localStorage.getItem('ug_playerId');
+        if (!myPlayerId) {
+            myPlayerId = 'player_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('ug_playerId', myPlayerId);
+        }
+        let currentDocUnsubscribe = null;
+        let gameData = null;
+        let amIProposer = false;
+
+        // Helpers
+        function showView(viewName) {
+            Object.values(views).forEach(el => {
+                el.classList.remove('active');
+            });
+            views[viewName].classList.add('active');
+
+            // Header visibility
+            if (viewName === 'lobby') {
+                gameHeader.classList.add('hidden');
+            } else {
+                gameHeader.classList.remove('hidden');
+            }
+        }
+
+        // Auto-join from URL
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeParam = urlParams.get('code');
+
+            if (codeParam) {
+                gameCodeInput.value = codeParam;
+                setTimeout(() => {
+                    const submitEvent = new Event('submit');
+                    joinForm.dispatchEvent(submitEvent);
+                }, 500);
+            }
+
+            fetchAvailableGames();
+        });
+
+        const availableGamesList = document.getElementById('availableGamesList');
+        const refreshGamesBtn = document.getElementById('refreshGamesBtn');
+
+        refreshGamesBtn.addEventListener('click', fetchAvailableGames);
+
+        async function fetchAvailableGames() {
+            availableGamesList.innerHTML = '<small class="text-muted">Loading...</small>';
+            try {
+                const snapshot = await db.collection("games")
+                    .where("status", "==", "waiting")
+                    .limit(5)
+                    .get();
+
+                availableGamesList.innerHTML = '';
+
+                if (snapshot.empty) {
+                    availableGamesList.innerHTML = '<small class="text-muted">No waiting games found. Create one in Admin!</small>';
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const g = doc.data();
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-secondary';
+                    btn.style.textAlign = 'left';
+                    btn.style.justifyContent = 'space-between';
+                    btn.innerHTML = `<span>Code: <strong>${g.gameCode}</strong></span> <span>Sum: ${g.config.totalSum}</span>`;
+                    btn.onclick = () => {
+                        gameCodeInput.value = g.gameCode;
+                        joinForm.dispatchEvent(new Event('submit'));
+                    };
+                    availableGamesList.appendChild(btn);
+                });
+            } catch (e) {
+                console.error(e);
+                availableGamesList.innerHTML = `<small style="color: var(--danger)">Error loading games: ${e.message}</small>`;
+            }
+        }
+
+        // Join Game
+        joinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = gameCodeInput.value.trim();
+            if (code.length !== 6) return;
+
+            joinError.style.display = 'none';
+            const btn = joinForm.querySelector('button');
+            btn.disabled = true;
+            btn.textContent = 'Joining...';
+
+            console.log("Attempting to join game:", code);
+
+            try {
+                // Fallback Strategy: Fetch recent 20 games and filter client-side
+                const querySnapshot = await db.collection("games")
+                    .where("gameCode", "==", code)
+                    .limit(1)
+                    .get();
+
+                if (querySnapshot.empty) {
+                    // Try fallback (rare) or just error
+                    throw new Error(`Game not found (Code: ${code}). Please check the 'Available Games' list.`);
+                }
+
+                const gameDoc = querySnapshot.docs[0];
+                const gameRef = db.collection("games").doc(gameDoc.id);
+                const data = gameDoc.data();
+
+                // Check if full
+                if (data.players && data.players.length >= 2) {
+                    // Check if I am already in it (rejoin)
+                    const amIn = data.players.find(p => p.id === myPlayerId);
+                    if (!amIn) throw new Error("Game is full");
+                }
+
+                // Add player transactionally to avoid race conditions
+                await db.runTransaction(async (transaction) => {
+                    const freshDoc = await transaction.get(gameRef);
+                    if (!freshDoc.exists) throw "Game does not exist!";
+                    const freshData = freshDoc.data();
+
+                    const existingPlayer = freshData.players.find(p => p.id === myPlayerId);
+
+                    if (!existingPlayer) {
+                        if (freshData.players.length >= 2) throw "Game is full";
+                        transaction.update(gameRef, {
+                            players: firebase.firestore.FieldValue.arrayUnion({ id: myPlayerId, score: 0 })
+                        });
+                    }
+                });
+
+                // Success - Start Listening
+                currentGameId = gameDoc.id;
+                startGameListener(gameRef);
+
+            } catch (err) {
+                console.error(err);
+                joinError.textContent = err.message || err;
+                joinError.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Join Game';
+            }
+        });
+
+        function startGameListener(gameRef) {
+            currentDocUnsubscribe = gameRef.onSnapshot((docSnap) => {
+                if (!docSnap.exists) {
+                    location.reload();
+                    return;
+                }
+
+                gameData = docSnap.data();
+                renderGameState();
+            });
+        }
+
+        function getMyRole() {
+            if (!gameData.players || gameData.players.length < 2) return null;
+
+            const myIndex = gameData.players.findIndex(p => p.id === myPlayerId);
+            if (myIndex === -1) return null;
+
+            const round = gameData.currentRound || 1;
+            const mode = gameData.config.roleMode;
+
+            let isProposer = false;
+
+            if (mode === 'fixed') {
+                isProposer = (myIndex === 0);
+            } else if (mode === 'alternating') {
+                isProposer = (myIndex === ((round - 1) % 2));
+            } else if (mode === 'random_each_round') {
+                isProposer = (myIndex === ((round - 1) % 2));
+            }
+
+            return isProposer ? 'proposer' : 'responder';
+        }
+
+        function renderGameState() {
+            // 1. Update Config UI
+            if (gameData.config.showScore) {
+                scoreboard.classList.remove('hidden');
+                const me = gameData.players.find(p => p.id === myPlayerId) || { score: 0 };
+                const opp = gameData.players.find(p => p.id !== myPlayerId) || { score: 0 };
+                myScoreEl.textContent = me.score;
+                oppScoreEl.textContent = opp.score;
+            } else {
+                scoreboard.classList.add('hidden');
+            }
+
+            if (gameData.config.chatEnabled) {
+                chatSection.classList.remove('hidden');
+                renderChat();
+            } else {
+                chatSection.classList.add('hidden');
+            }
+
+            totalSumDisplay.textContent = gameData.config.totalSum;
+            currentRoundDisplay.textContent = gameData.currentRound;
+
+            // 2. Check general status
+            if (gameData.players.length < 2) {
+                showView('waiting');
+                document.getElementById('waitingMessage').textContent = "Waiting for opponent...";
+                return;
+            }
+
+            if (gameData.status === 'completed') {
+                showView('gameOver');
+                const me = gameData.players.find(p => p.id === myPlayerId);
+                const opp = gameData.players.find(p => p.id !== myPlayerId);
+                document.getElementById('finalMyScore').textContent = me.score;
+                document.getElementById('finalOppScore').textContent = opp.score;
+                return;
+            }
+
+            // 3. Round State
+            const myRole = getMyRole();
+            amIProposer = (myRole === 'proposer');
+
+            // Check if round is "done" (decision made)
+            const currentOutcome = gameData.roundState?.decision; // "accept" or "refuse"
+
+            if (currentOutcome) {
+                // Show Results
+                showView('result');
+                const summaryEl = document.getElementById('roundResultSummary');
+
+                let msg = "";
+                let color = "";
+
+                if (currentOutcome === 'accepted') {
+                    msg = "Offer Accepted!";
+                    color = "var(--success)";
+                } else {
+                    msg = "Offer Refused!";
+                    color = "var(--danger)";
+                }
+
+                // Show details
+                const offer = gameData.roundState.offer;
+                const total = gameData.config.totalSum;
+                const kept = total - offer;
+
+                let details = "";
+                if (amIProposer) {
+                    details = currentOutcome === 'accepted'
+                        ? `You earned ${kept}. Opponent earned ${offer}.`
+                        : `You earned 0. Opponent earned 0.`;
+                } else {
+                    details = currentOutcome === 'accepted'
+                        ? `You earned ${offer}. Opponent earned ${kept}.`
+                        : `You earned 0. Opponent earned 0.`;
+                }
+
+                summaryEl.innerHTML = `
+                    <h2 style="color: ${color}">${msg}</h2>
+                    <p style="font-size: 1.2rem; margin-top: 1rem;">${details}</p>
+                `;
+
+                // Handle Auto-Advancement (Client-side trigger)
+                const myIndex = gameData.players.findIndex(p => p.id === myPlayerId);
+                if (myIndex === 0 && !gameData.roundHandlingInProgress) {
+                    if (!window.nextRoundTimeout) {
+                        window.nextRoundTimeout = setTimeout(() => {
+                            startNextRound();
+                        }, 4000);
+                    }
+                }
+                return;
+            }
+
+            // Clear timeout if we are not in result view anymore
+            if (window.nextRoundTimeout && !currentOutcome) {
+                clearTimeout(window.nextRoundTimeout);
+                window.nextRoundTimeout = null;
+            }
+
+            // 4. Game Action View
+            showView('game');
+
+            // Set Slider Defaults
+            if (gameData.config) {
+                offerSlider.max = gameData.config.totalSum;
+                if (!offerSlider.getAttribute('data-init')) {
+                    offerSlider.value = Math.floor(gameData.config.totalSum / 2);
+                    offerSlider.setAttribute('data-init', 'true');
+                    // Trigger update
+                    offerSlider.dispatchEvent(new Event('input'));
+                }
+            }
+
+            // Setup Role UI
+            if (myRole === 'proposer') {
+                roleBadge.className = 'role-badge role-proposer';
+                roleBadge.textContent = 'Proposer';
+                roleDescription.textContent = 'You possess the sum. Make an offer.';
+
+                proposerControls.classList.remove('hidden');
+                responderControls.classList.add('hidden');
+
+                // Check if I already made an offer
+                if (gameData.roundState?.offer !== undefined && gameData.roundState?.offer !== null) {
+                    // Waiting for responder
+                    proposerControls.innerHTML = `
+                        <div class="card" style="background: rgba(255,255,255,0.05);">
+                            <h3>Offer Sent: ${gameData.roundState.offer}</h3>
+                            <p class="text-muted">Waiting for responder...</p>
+                        </div>
+                    `;
+                } else {
+                    if (proposerControls.innerHTML.includes("Offer Sent")) {
+                        location.reload();
+                        return;
+                    }
+                }
+            } else {
+                roleBadge.className = 'role-badge role-responder';
+                roleBadge.textContent = 'Responder';
+                roleDescription.textContent = 'Wait for the offer and decide.';
+
+                proposerControls.classList.add('hidden');
+                responderControls.classList.remove('hidden');
+
+                const offer = gameData.roundState?.offer;
+                if (offer !== undefined && offer !== null) {
+                    // Show Offer
+                    responderOfferValue.textContent = offer;
+                    responderKeepValue.textContent = gameData.config.totalSum - offer;
+                    acceptBtn.disabled = false;
+                    refuseBtn.disabled = false;
+                } else {
+                    // Waiting for offer
+                    responderOfferValue.textContent = "?";
+                    responderKeepValue.textContent = "?";
+                    acceptBtn.disabled = true;
+                    refuseBtn.disabled = true;
+                }
+            }
+        }
+
+        // Proposer Logic
+        offerSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            const total = gameData.config.totalSum;
+            const offer = val;
+            const keep = total - val;
+
+            offerValue.textContent = offer;
+            keepValue.textContent = keep;
+        });
+
+        makeOfferBtn.addEventListener('click', async () => {
+            const offer = parseInt(offerSlider.value);
+            const gameRef = db.collection("games").doc(currentGameId);
+
+            makeOfferBtn.disabled = true;
+            makeOfferBtn.textContent = "Sending...";
+
+            await gameRef.update({
+                "roundState.offer": offer,
+                "roundState.proposerId": myPlayerId
+            });
+        });
+
+        // Responder Logic
+        acceptBtn.addEventListener('click', () => submitDecision('accepted'));
+        refuseBtn.addEventListener('click', () => submitDecision('refused'));
+
+        async function submitDecision(decision) {
+            const gameRef = db.collection("games").doc(currentGameId);
+            // Disable buttons
+            acceptBtn.disabled = true;
+            refuseBtn.disabled = true;
+
+            await gameRef.update({
+                "roundState.decision": decision,
+                "roundState.responderId": myPlayerId
+            });
+        }
+
+        // Start Next Round (Host only)
+        async function startNextRound() {
+            clearTimeout(window.nextRoundTimeout);
+            window.nextRoundTimeout = null;
+
+            const gameRef = db.collection("games").doc(currentGameId);
+
+            // Calculate Score Updates
+            const outcome = gameData.roundState.decision;
+            const offer = gameData.roundState.offer;
+            const total = gameData.config.totalSum;
+
+            const proposerId = gameData.roundState.proposerId;
+            const responderId = gameData?.roundState?.responderId || gameData.players.find(p => p.id !== proposerId).id;
+
+            let pScoreAdd = 0;
+            let rScoreAdd = 0;
+
+            if (outcome === 'accepted') {
+                pScoreAdd = total - offer;
+                rScoreAdd = offer;
+            }
+
+            // Update Players array
+            const newPlayers = gameData.players.map(p => {
+                if (p.id === proposerId) return { ...p, score: p.score + pScoreAdd };
+                if (p.id === responderId) return { ...p, score: p.score + rScoreAdd };
+                return p;
+            });
+
+            // Archive History
+            const historyEntry = {
+                round: gameData.currentRound,
+                proposer: proposerId,
+                responder: responderId,
+                offer: offer,
+                decision: outcome,
+                chatLogs: gameData.roundState.chatMessages || []
+            };
+
+            // Check Game Over
+            let nextStatus = "in_progress";
+            let nextRound = gameData.currentRound + 1;
+
+            if (gameData.currentRound >= gameData.config.rounds) {
+                nextStatus = "completed";
+            }
+
+            await gameRef.update({
+                players: newPlayers,
+                history: firebase.firestore.FieldValue.arrayUnion(historyEntry),
+                currentRound: nextRound,
+                status: nextStatus,
+                roundState: { // Reset round state
+                    offer: null,
+                    decision: null,
+                    chatMessages: []
+                }
+            });
+        }
+
+        // Chat Logic
+        function renderChat() {
+            const msgs = gameData.roundState?.chatMessages || [];
+            chatMessages.innerHTML = '';
+            msgs.forEach(m => {
+                const div = document.createElement('div');
+                div.className = `chat-msg ${m.senderId === myPlayerId ? 'me' : 'them'}`;
+                div.textContent = m.text;
+                chatMessages.appendChild(div);
+            });
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            const gameRef = db.collection("games").doc(currentGameId);
+            const msg = {
+                senderId: myPlayerId,
+                text: text,
+                role: amIProposer ? 'Proposer' : 'Responder',
+                timestamp: Date.now()
+            };
+
+            chatInput.value = '';
+
+            // Safe approach: use arrayUnion on "roundState.chatMessages"
+            await gameRef.update({
+                "roundState.chatMessages": firebase.firestore.FieldValue.arrayUnion(msg)
+            });
+        });
+    </script>
+</body>
+
+</html>
