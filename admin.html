@@ -12,54 +12,54 @@
 <body>
     <div class="container fade-in">
         <div class="admin-header">
-            <h1>Ultimatum Game Admin</h1>
+            <h1>Ultimátum Játék Admin</h1>
         </div>
 
         <div class="card">
-            <h2>Create New Game</h2>
+            <h2>Új Játék Létrehozása</h2>
             <form id="createGameForm">
                 <div class="form-group">
-                    <label for="totalSum">Total Sum to Split</label>
+                    <label for="totalSum">Teljes Összeg (Amit el kell osztani)</label>
                     <input type="number" id="totalSum" value="100" min="1" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="rounds">Number of Rounds</label>
+                    <label for="rounds">Körök Száma</label>
                     <input type="number" id="rounds" value="1" min="1" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="roleMode">Role Assignment Mode</label>
+                    <label for="roleMode">Szerepkörök</label>
                     <select id="roleMode">
-                        <option value="fixed">Fixed Roles (Player 1 always Proposer)</option>
-                        <option value="alternating">Alternating Roles (Swap every round)</option>
-                        <option value="random_each_round">Random each round</option>
+                        <option value="fixed">Fix (1. Játékos mindig Ajánlattevő)</option>
+                        <option value="alternating">Váltakozó (Minden körben csere)</option>
+                        <option value="random_each_round">Véletlenszerű minden körben</option>
                     </select>
                 </div>
 
                 <div class="form-group checkbox-wrapper">
                     <input type="checkbox" id="chatEnabled">
-                    <label for="chatEnabled">Enable Chat between players</label>
+                    <label for="chatEnabled">Chat engedélyezése a játékosok között</label>
                 </div>
 
                 <div class="form-group checkbox-wrapper">
                     <input type="checkbox" id="showScore" checked>
-                    <label for="showScore">Show real-time score to players</label>
+                    <label for="showScore">Pontszámok mutatása</label>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-lg">Create Game</button>
+                <button type="submit" class="btn btn-primary btn-lg">Játék Létrehozása</button>
             </form>
         </div>
 
         <div class="card">
             <div class="admin-header" style="margin-bottom: 1rem;">
-                <h2>Recent Games</h2>
-                <button id="downloadCsvBtn" class="btn btn-secondary">Download CSV</button>
+                <h2>Legutóbbi Játékok</h2>
+                <button id="downloadCsvBtn" class="btn btn-secondary">CSV Letöltés</button>
             </div>
             <div id="gamesList" class="games-list">
                 <!-- Game items will be populated here -->
                 <div class="game-item" style="justify-content: center; color: var(--text-muted);">
-                    Loading games...
+                    Játékok betöltése...
                 </div>
             </div>
         </div>
@@ -107,7 +107,7 @@
 
             const submitBtn = createGameForm.querySelector('button');
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Creating...';
+            submitBtn.textContent = 'Létrehozás...';
 
             // Clear previous messages
             const existingSuccess = document.getElementById('successBox');
@@ -145,7 +145,7 @@
 
                 // Timeout Promise
                 const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error("Connection timed out. Check your internet or Firewall.")), 10000)
+                    setTimeout(() => reject(new Error("Időtúllépés. Ellenőrizd az internetkapcsolatot vagy a tűzfalat.")), 10000)
                 );
 
                 await Promise.race([createPromise, timeoutPromise]);
@@ -174,10 +174,10 @@
                 gameItem.style.border = '2px solid var(--success)';
                 gameItem.style.marginTop = '2rem';
                 gameItem.innerHTML = `
-                    <h3 style="color: var(--success)">Game Created!</h3>
-                    <p><strong>Code:</strong> <span style="font-size: 1.5rem;">${gameCode}</span></p>
+                    <h3 style="color: var(--success)">Játék Létrehozva!</h3>
+                    <p><strong>Kód:</strong> <span style="font-size: 1.5rem;">${gameCode}</span></p>
                     <p style="margin: 0.5rem 0;">
-                        <strong>Share Link:</strong><br>
+                        <strong>Megosztható link:</strong><br>
                         <a href="${joinLink}" target="_blank" style="color: var(--primary-color); word-break: break-all;">${joinLink}</a>
                     </p>
                 `;
@@ -196,20 +196,20 @@
                 errDiv.style.border = '2px solid var(--danger)';
                 errDiv.style.marginTop = '2rem';
                 errDiv.innerHTML = `
-                    <h3 style="color: var(--danger)">Creation Failed</h3>
+                    <h3 style="color: var(--danger)">Hiba közben</h3>
                     <p>${error.message}</p>
                     <p class="text-muted" style="font-size: 0.9rem;">
-                        Possible causes:<br>
-                        1. Firestore Rules block writes (Did you enable <strong>Test Mode</strong>?).<br>
-                        2. Internet connection issue.<br>
-                        3. Quota exceeded.
+                        Lehetséges okok:<br>
+                        1. Hiányzó Jogosultságok (Engedélyezted a 'Cloud Firestore'-t?).<br>
+                        2. Internet hiba.<br>
+                        3. Rossz Firebase Config.
                     </p>
                 `;
                 createGameForm.parentNode.insertBefore(errDiv, createGameForm.nextSibling);
 
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Create Game';
+                submitBtn.textContent = 'Játék Létrehozása';
             }
         });
 
@@ -218,24 +218,24 @@
             gamesList.innerHTML = '';
 
             if (snapshot.empty) {
-                gamesList.innerHTML = '<div class="game-item" style="justify-content: center;">No games found.</div>';
+                gamesList.innerHTML = '<div class="game-item" style="justify-content: center;">Nincs elérhető játék.</div>';
                 return;
             }
 
             snapshot.forEach((doc) => {
                 const game = doc.data();
-                const date = game.createdAt ? game.createdAt.toDate().toLocaleString() : 'Just now';
+                const date = game.createdAt ? game.createdAt.toDate().toLocaleString() : 'Épp most';
 
                 const div = document.createElement('div');
                 div.className = 'game-item';
                 div.innerHTML = `
                     <div>
-                        <strong>Code: ${game.gameCode}</strong><br>
+                        <strong>Kód: ${game.gameCode}</strong><br>
                         <small class="text-muted">${date}</small>
                     </div>
                     <div style="text-align: right;">
                         <span class="status-badge status-${game.status}">${game.status}</span><br>
-                        <small>${game.players ? game.players.length : 0}/2 Players</small>
+                        <small>${game.players ? game.players.length : 0}/2 Játékos</small>
                     </div>
                 `;
                 gamesList.appendChild(div);
@@ -244,22 +244,22 @@
             // Handle snapshot error
             console.error("Snapshot error:", error);
             gamesList.innerHTML = `<div class="game-item" style="color: var(--danger); justify-content: center;">
-                Error loading games: ${error.message}<br>
-                Check Firestore Rules.
+                Hiba a játékok betöltésekor: ${error.message}<br>
+                Ellenőrizd a Firestore Jogosultságokat.
            </div>`;
         });
 
         // CSV Export Logic
         downloadCsvBtn.addEventListener('click', async () => {
             downloadCsvBtn.disabled = true;
-            downloadCsvBtn.textContent = "Generating...";
+            downloadCsvBtn.textContent = "Generálás...";
 
             try {
                 const querySnapshot = await db.collection("games").get();
 
                 let csvContent = "data:text/csv;charset=utf-8,";
                 // Header
-                csvContent += "GameID,Date,TotalSum,Rounds,RoleMode,RoundNum,ProposerID,ResponderID,Offer,Decision,ChatLogs\n";
+                csvContent += "JatekID,Datum,TeljesOsszeg,Korok,SzerepMod,KorSzam,AjanlattevoID,ValaszoloID,Ajanlat,Dontes,ChatNaplo\n";
 
                 querySnapshot.forEach((doc) => {
                     const game = doc.data();
@@ -291,17 +291,17 @@
                 const encodedUri = encodeURI(csvContent);
                 const link = document.createElement("a");
                 link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "ultimatum_game_data.csv");
+                link.setAttribute("download", "ultimatum_jatek_adatok.csv");
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
 
             } catch (e) {
                 console.error("Export error:", e);
-                alert("Failed to export CSV: " + e.message);
+                alert("Sikertelen CSV exportálás: " + e.message);
             } finally {
                 downloadCsvBtn.disabled = false;
-                downloadCsvBtn.textContent = "Download CSV";
+                downloadCsvBtn.textContent = "CSV Letöltés";
             }
         });
     </script>

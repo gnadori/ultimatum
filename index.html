@@ -130,33 +130,34 @@
         <!-- HEADER -->
         <div id="gameHeader" class="hidden"
             style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="margin:0;">Ultimatum Game</h2>
-            <div id="roundIndicator">Round <span id="currentRoundDisplay">1</span></div>
+            <h2 style="margin:0;">Ultimátum Játék</h2>
+            <div id="roundIndicator">Kör: <span id="currentRoundDisplay">1</span></div>
         </div>
 
         <!-- VIEW: LOBBY -->
         <div id="viewLobby" class="view-section active">
             <div class="card" style="max-width: 500px; margin: 2rem auto; text-align: center;">
-                <h1>Join Game</h1>
-                <p class="text-muted" style="margin-bottom: 2rem;">Enter the code provided by the game admin.</p>
+                <h1>Csatlakozás</h1>
+                <p class="text-muted" style="margin-bottom: 2rem;">Írd be a játék adminisztrátora által megadott kódot.
+                </p>
                 <form id="joinForm">
                     <div class="form-group">
-                        <input type="text" id="gameCodeInput" placeholder="Enter 6-digit Code" maxlength="6"
+                        <input type="text" id="gameCodeInput" placeholder="6-jegyű Kód" maxlength="6"
                             style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;" required>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-lg">Join Game</button>
+                    <button type="submit" class="btn btn-primary btn-lg">Csatlakozás</button>
                     <p id="joinError" style="color: var(--danger); margin-top: 1rem; display: none;"></p>
                 </form>
 
                 <div id="availableGamesSection"
                     style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-                    <h3>Available Games</h3>
+                    <h3>Elérhető Játékok</h3>
                     <div id="availableGamesList"
                         style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
-                        <small class="text-muted">Loading games...</small>
+                        <small class="text-muted">Játékok betöltése...</small>
                     </div>
-                    <button id="refreshGamesBtn" class="btn btn-secondary btn-sm" style="margin-top: 1rem;">Refresh
-                        List</button>
+                    <button id="refreshGamesBtn" class="btn btn-secondary btn-sm"
+                        style="margin-top: 1rem;">Frissítés</button>
                 </div>
             </div>
         </div>
@@ -165,8 +166,8 @@
         <div id="viewWaiting" class="view-section">
             <div class="card" style="text-align: center; padding: 3rem;">
                 <div class="spinner" style="margin-bottom: 1rem;">⏳</div> <!-- Can replace with proper CSS spinner -->
-                <h2 id="waitingMessage">Waiting for game to start...</h2>
-                <p id="waitingSubtext" class="text-muted">Please wait.</p>
+                <h2 id="waitingMessage">Várakozás a játék indítására...</h2>
+                <p id="waitingSubtext" class="text-muted">Kérlek várj.</p>
             </div>
         </div>
 
@@ -176,52 +177,52 @@
                 <!-- Scoreboard -->
                 <div id="scoreboard" class="scoreboard hidden">
                     <div class="score-box">
-                        <div class="text-muted">You</div>
+                        <div class="text-muted">Te</div>
                         <div id="myScore" class="score-value">0</div>
                     </div>
                     <div class="score-box">
-                        <div class="text-muted">Opponent</div>
+                        <div class="text-muted">Ellenfél</div>
                         <div id="oppScore" class="score-value">0</div>
                     </div>
                 </div>
 
                 <!-- Role Indicator -->
                 <div style="text-align: center;">
-                    <div id="roleBadge" class="role-badge role-proposer">Proposer</div>
-                    <p id="roleDescription" style="margin-bottom: 2rem;">You decide how to split the money.</p>
+                    <div id="roleBadge" class="role-badge role-proposer">Ajánlattevő</div>
+                    <p id="roleDescription" style="margin-bottom: 2rem;">Te döntesz a pénz elosztásáról.</p>
                 </div>
 
                 <!-- Proposer Controls -->
                 <div id="proposerControls" class="hidden">
                     <div class="range-container">
-                        <p>Total Sum: <strong id="totalSumDisplay">100</strong></p>
+                        <p>Teljes Összeg: <strong id="totalSumDisplay">100</strong></p>
                         <input type="range" id="offerSlider" min="0" max="100" value="50">
                         <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
                             <div class="card" style="padding: 1rem; width: 45%;">
-                                <small>You keep</small>
+                                <small>Te megtartasz</small>
                                 <div id="keepValue" class="score-value">50</div>
                             </div>
                             <div class="card" style="padding: 1rem; width: 45%;">
-                                <small>Opponent gets</small>
+                                <small>Ellenfél kap</small>
                                 <div id="offerValue" class="score-value">50</div>
                             </div>
                         </div>
                     </div>
-                    <button id="makeOfferBtn" class="btn btn-primary btn-lg">Make Offer</button>
+                    <button id="makeOfferBtn" class="btn btn-primary btn-lg">Ajánlat Elküldése</button>
                 </div>
 
                 <!-- Responder Controls -->
                 <div id="responderControls" class="hidden">
                     <div class="offer-display">
-                        Offer: <span id="responderOfferValue">50</span>
+                        Ajánlat: <span id="responderOfferValue">50</span>
                     </div>
                     <p style="text-align: center; margin-bottom: 2rem;">
-                        The proposer wants to keep <strong id="responderKeepValue">50</strong>.
+                        Az ajánlattevő ennyit tartana meg: <strong id="responderKeepValue">50</strong>.
                     </p>
                     <div style="display: flex; gap: 1rem;">
                         <button id="acceptBtn" class="btn btn-primary btn-lg"
-                            style="background-color: var(--success);">Accept</button>
-                        <button id="refuseBtn" class="btn btn-danger btn-lg">Refuse</button>
+                            style="background-color: var(--success);">Elfogad</button>
+                        <button id="refuseBtn" class="btn btn-danger btn-lg">Elutasít</button>
                     </div>
                 </div>
 
@@ -229,8 +230,8 @@
                 <div id="chatSection" class="chat-container hidden">
                     <div id="chatMessages" class="chat-messages"></div>
                     <form id="chatForm" style="display: flex; gap: 0.5rem;">
-                        <input type="text" id="chatInput" placeholder="Type a message..." autocomplete="off">
-                        <button type="submit" class="btn btn-secondary">Send</button>
+                        <input type="text" id="chatInput" placeholder="Írj egy üzenetet..." autocomplete="off">
+                        <button type="submit" class="btn btn-secondary">Küldés</button>
                     </form>
                 </div>
             </div>
@@ -239,29 +240,29 @@
         <!-- VIEW: ROUND RESULT -->
         <div id="viewResult" class="view-section">
             <div class="card" style="text-align: center;">
-                <h2>Round Results</h2>
+                <h2>Kör Eredménye</h2>
                 <div id="roundResultSummary" class="results-summary">
                     <!-- Dynamic content -->
                 </div>
-                <p id="nextRoundTimer" class="text-muted">Next round starting soon...</p>
+                <p id="nextRoundTimer" class="text-muted">A következő kör hamarosan indul...</p>
             </div>
         </div>
 
         <!-- VIEW: GAME OVER -->
         <div id="viewGameOver" class="view-section">
             <div class="card" style="text-align: center;">
-                <h1>Game Over</h1>
+                <h1>Játék Vége</h1>
                 <div class="scoreboard" style="display:flex; justify-content:center;">
                     <div class="score-box">
-                        <div class="text-muted">Final Score (You)</div>
+                        <div class="text-muted">Végső Pontszám (Te)</div>
                         <div id="finalMyScore" class="score-value">0</div>
                     </div>
                     <div class="score-box">
-                        <div class="text-muted">Final Score (Opponent)</div>
+                        <div class="text-muted">Végső Pontszám (Ellenfél)</div>
                         <div id="finalOppScore" class="score-value">0</div>
                     </div>
                 </div>
-                <button onclick="location.reload()" class="btn btn-primary">Back to Home</button>
+                <button onclick="location.reload()" class="btn btn-primary">Vissza a Főoldalra</button>
             </div>
         </div>
 
@@ -381,7 +382,7 @@
         refreshGamesBtn.addEventListener('click', fetchAvailableGames);
 
         async function fetchAvailableGames() {
-            availableGamesList.innerHTML = '<small class="text-muted">Loading...</small>';
+            availableGamesList.innerHTML = '<small class="text-muted">Betöltés...</small>';
             try {
                 const snapshot = await db.collection("games")
                     .where("status", "==", "waiting")
@@ -391,7 +392,7 @@
                 availableGamesList.innerHTML = '';
 
                 if (snapshot.empty) {
-                    availableGamesList.innerHTML = '<small class="text-muted">No waiting games found. Create one in Admin!</small>';
+                    availableGamesList.innerHTML = '<small class="text-muted">Nincs várakozó játék. Készíts egyet az Admin oldalon!</small>';
                     return;
                 }
 
@@ -401,7 +402,7 @@
                     btn.className = 'btn btn-secondary';
                     btn.style.textAlign = 'left';
                     btn.style.justifyContent = 'space-between';
-                    btn.innerHTML = `<span>Code: <strong>${g.gameCode}</strong></span> <span>Sum: ${g.config.totalSum}</span>`;
+                    btn.innerHTML = `<span>Kód: <strong>${g.gameCode}</strong></span> <span>Összeg: ${g.config.totalSum}</span>`;
                     btn.onclick = () => {
                         gameCodeInput.value = g.gameCode;
                         joinForm.dispatchEvent(new Event('submit'));
@@ -410,7 +411,7 @@
                 });
             } catch (e) {
                 console.error(e);
-                availableGamesList.innerHTML = `<small style="color: var(--danger)">Error loading games: ${e.message}</small>`;
+                availableGamesList.innerHTML = `<small style="color: var(--danger)">Hiba a betöltéskor: ${e.message}</small>`;
             }
         }
 
@@ -423,7 +424,7 @@
             joinError.style.display = 'none';
             const btn = joinForm.querySelector('button');
             btn.disabled = true;
-            btn.textContent = 'Joining...';
+            btn.textContent = 'Csatlakozás...';
 
             console.log("Attempting to join game:", code);
 
@@ -436,7 +437,7 @@
 
                 if (querySnapshot.empty) {
                     // Try fallback (rare) or just error
-                    throw new Error(`Game not found (Code: ${code}). Please check the 'Available Games' list.`);
+                    throw new Error(`Játék nem található (Kód: ${code}). Ellenőrizd az 'Elérhető Játékok' listáját.`);
                 }
 
                 const gameDoc = querySnapshot.docs[0];
@@ -447,19 +448,19 @@
                 if (data.players && data.players.length >= 2) {
                     // Check if I am already in it (rejoin)
                     const amIn = data.players.find(p => p.id === myPlayerId);
-                    if (!amIn) throw new Error("Game is full");
+                    if (!amIn) throw new Error("A játék megtelt");
                 }
 
                 // Add player transactionally to avoid race conditions
                 await db.runTransaction(async (transaction) => {
                     const freshDoc = await transaction.get(gameRef);
-                    if (!freshDoc.exists) throw "Game does not exist!";
+                    if (!freshDoc.exists) throw "A játék nem létezik!";
                     const freshData = freshDoc.data();
 
                     const existingPlayer = freshData.players.find(p => p.id === myPlayerId);
 
                     if (!existingPlayer) {
-                        if (freshData.players.length >= 2) throw "Game is full";
+                        if (freshData.players.length >= 2) throw "A játék megtelt";
                         transaction.update(gameRef, {
                             players: firebase.firestore.FieldValue.arrayUnion({ id: myPlayerId, score: 0 })
                         });
@@ -475,7 +476,7 @@
                 joinError.textContent = err.message || err;
                 joinError.style.display = 'block';
                 btn.disabled = false;
-                btn.textContent = 'Join Game';
+                btn.textContent = 'Csatlakozás';
             }
         });
 
@@ -538,7 +539,7 @@
             // 2. Check general status
             if (gameData.players.length < 2) {
                 showView('waiting');
-                document.getElementById('waitingMessage').textContent = "Waiting for opponent...";
+                document.getElementById('waitingMessage').textContent = "Várakozás az ellenfélre...";
                 return;
             }
 
@@ -567,10 +568,10 @@
                 let color = "";
 
                 if (currentOutcome === 'accepted') {
-                    msg = "Offer Accepted!";
+                    msg = "Ajánlat Elfogadva!";
                     color = "var(--success)";
                 } else {
-                    msg = "Offer Refused!";
+                    msg = "Ajánlat Elutasítva!";
                     color = "var(--danger)";
                 }
 
@@ -582,12 +583,12 @@
                 let details = "";
                 if (amIProposer) {
                     details = currentOutcome === 'accepted'
-                        ? `You earned ${kept}. Opponent earned ${offer}.`
-                        : `You earned 0. Opponent earned 0.`;
+                        ? `Te kaptál: ${kept}. Ellenfél kapott: ${offer}.`
+                        : `Te kaptál: 0. Ellenfél kapott: 0.`;
                 } else {
                     details = currentOutcome === 'accepted'
-                        ? `You earned ${offer}. Opponent earned ${kept}.`
-                        : `You earned 0. Opponent earned 0.`;
+                        ? `Te kaptál: ${offer}. Ellenfél kapott: ${kept}.`
+                        : `Te kaptál: 0. Ellenfél kapott: 0.`;
                 }
 
                 summaryEl.innerHTML = `
@@ -630,8 +631,8 @@
             // Setup Role UI
             if (myRole === 'proposer') {
                 roleBadge.className = 'role-badge role-proposer';
-                roleBadge.textContent = 'Proposer';
-                roleDescription.textContent = 'You possess the sum. Make an offer.';
+                roleBadge.textContent = 'Ajánlattevő';
+                roleDescription.textContent = 'Tiéd a pénz. Tégy egy ajánlatot.';
 
                 proposerControls.classList.remove('hidden');
                 responderControls.classList.add('hidden');
@@ -641,8 +642,8 @@
                     // Waiting for responder
                     proposerControls.innerHTML = `
                         <div class="card" style="background: rgba(255,255,255,0.05);">
-                            <h3>Offer Sent: ${gameData.roundState.offer}</h3>
-                            <p class="text-muted">Waiting for responder...</p>
+                            <h3>Ajánlat elküldve: ${gameData.roundState.offer}</h3>
+                            <p class="text-muted">Várakozás a válaszolóra...</p>
                         </div>
                     `;
                 } else {
@@ -653,8 +654,8 @@
                 }
             } else {
                 roleBadge.className = 'role-badge role-responder';
-                roleBadge.textContent = 'Responder';
-                roleDescription.textContent = 'Wait for the offer and decide.';
+                roleBadge.textContent = 'Válaszoló';
+                roleDescription.textContent = 'Várd meg az ajánlatot és dönts.';
 
                 proposerControls.classList.add('hidden');
                 responderControls.classList.remove('hidden');
@@ -692,7 +693,7 @@
             const gameRef = db.collection("games").doc(currentGameId);
 
             makeOfferBtn.disabled = true;
-            makeOfferBtn.textContent = "Sending...";
+            makeOfferBtn.textContent = "Küldés...";
 
             await gameRef.update({
                 "roundState.offer": offer,
