@@ -647,7 +647,9 @@
                         </div>
                     `;
                 } else {
-                    if (proposerControls.innerHTML.includes("Offer Sent")) {
+                    // If the slider is missing (because we overwrote it with the waiting message),
+                    // we need to reload to restore the controls for the new round.
+                    if (!document.getElementById('offerSlider')) {
                         location.reload();
                         return;
                     }
