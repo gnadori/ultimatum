@@ -35,6 +35,7 @@ Mivel a játék tisztán HTML/JS alapú és a Firebase szolgáltatást használj
 3. Kattints a **"Játék Létrehozása"** gombra.
 4. Oszd meg a **6-jegyű kódot** vagy a **linket** a két játékossal.
 5. A játék végén a **"CSV Letöltés"** gombbal kimentheted az adatokat Excel-kompatibilis formátumban.
+6. Ha minden játékot törölni szeretnél az adatbázisból (pl. új osztály jön), használd az **"Összes Törlése"** gombot.
 
 ### Játékosok
 1. Nyissák meg az `index.html` oldalt (vagy a kapott linket).

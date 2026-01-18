@@ -54,7 +54,12 @@
         <div class="card">
             <div class="admin-header" style="margin-bottom: 1rem;">
                 <h2>Legutóbbi Játékok</h2>
-                <button id="downloadCsvBtn" class="btn btn-secondary">CSV Letöltés</button>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button id="downloadCsvBtn" class="btn btn-secondary">CSV Letöltés</button>
+                    <button id="resetDatabaseBtn" class="btn btn-danger"
+                        style="background-color: var(--danger); color: white; border: 1px solid #7f1d1d;">Összes
+                        Törlése</button>
+                </div>
             </div>
             <div id="gamesList" class="games-list">
                 <!-- Game items will be populated here -->
@@ -247,6 +252,43 @@
                 Hiba a játékok betöltésekor: ${error.message}<br>
                 Ellenőrizd a Firestore Jogosultságokat.
            </div>`;
+        });
+
+        // Reset Database Logic
+        document.getElementById('resetDatabaseBtn').addEventListener('click', async () => {
+            if (!confirm("Biztosan törölni akarod az ÖSSZES játékot? Ez a művelet nem visszavonható!")) {
+                return;
+            }
+
+            const btn = document.getElementById('resetDatabaseBtn');
+            btn.disabled = true;
+            btn.textContent = "Törlés...";
+
+            try {
+                // Client-side delete all logic (Batching)
+                const querySnapshot = await db.collection("games").get();
+
+                if (querySnapshot.empty) {
+                    alert("Az adatbázis már üres.");
+                    return;
+                }
+
+                // Firestore batch limit is 500
+                const batch = db.batch();
+                querySnapshot.docs.forEach((doc) => {
+                    batch.delete(doc.ref);
+                });
+
+                await batch.commit();
+                alert("Minden játék sikeresen törölve!");
+
+            } catch (e) {
+                console.error("Delete error:", e);
+                alert("Hiba a törléskor: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Összes Törlése";
+            }
         });
 
         // CSV Export Logic
