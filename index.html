@@ -288,6 +288,9 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // FORCE LONG POLLING (Fix for School Firewalls blocking WebSockets)
+        db.settings({ experimentalForceLongPolling: true });
+
         // --- Game Logic ---
 
         // DOM Elements
